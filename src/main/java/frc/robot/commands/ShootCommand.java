@@ -63,6 +63,7 @@ public class ShootCommand extends Command {
         SmartDashboard.putNumber("ShootCommand/Distance (m)", distance);
         SmartDashboard.putBoolean("ShootCommand/Shooter Ready", shooter.isReadyToShoot());
 
+
         boolean distanceChanged = Math.abs(distance - lastCommandedDistance) > 0.05;
 
         switch (phase) {
@@ -111,7 +112,7 @@ public class ShootCommand extends Command {
         return false;
     }
 
-    private double getDistanceToHub() {
+    public double getDistanceToHub() {
         if (LimelightHelpers.getTV(LIMELIGHT_NAME)) {
             LimelightHelpers.RawFiducial[] fiducials =
                 LimelightHelpers.getRawFiducials(LIMELIGHT_NAME);
@@ -130,12 +131,13 @@ public class ShootCommand extends Command {
                     SmartDashboard.putBoolean("ShootCommand/Using Limelight", true);
                     SmartDashboard.putNumber("ShootCommand/LL Tag ID", best.id);
                     SmartDashboard.putNumber("ShootCommand/LL Dist To Robot (m)", best.distToRobot);
+                    SmartDashboard.putNumber("GetDistanceToHub", getDistanceToHub());
                     return best.distToRobot;
                 }
             }
         }
 
-        SmartDashboard.putBoolean("ShootCommand/Using Limelight", false);
+        SmartDashboard.putBoolean("ShootCommand/Using Limelight", true);
         Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
         Translation2d hub = (alliance == Alliance.Blue) ? BLUE_HUB : RED_HUB;
         return hub.minus(drivetrain.getState().Pose.getTranslation()).getNorm();

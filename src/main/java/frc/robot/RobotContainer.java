@@ -110,9 +110,8 @@ public class RobotContainer {
 
                 joystick.rightBumper().whileTrue(
                                 Commands.startEnd(hopper::eject, hopper::stop, hopper));
-
-                joystick.povUp().onTrue(Commands.runOnce(() -> shooter.setVelocityRPM(shooter.getWheelRPM() + 500),shooter));
-                joystick.povDown().onTrue(Commands.runOnce(() -> shooter.setVelocityRPM(shooter.getWheelRPM() - 500),shooter));
+                joystick.povUp().onTrue(Commands.runOnce(() -> shooter.changeVelocityRPM(500.0), shooter));
+                joystick.povDown().onTrue(Commands.runOnce(() -> shooter.changeVelocityRPM(-500.0), shooter));
 
                 joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
                 joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));

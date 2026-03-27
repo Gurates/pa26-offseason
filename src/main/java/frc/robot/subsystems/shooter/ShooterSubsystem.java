@@ -8,12 +8,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.ShooterConstants;
-
-import java.util.Map;
 
 public class ShooterSubsystem extends SubsystemBase {
 
@@ -22,15 +19,10 @@ public class ShooterSubsystem extends SubsystemBase {
     private final VelocityVoltage velocityRequest =
         new VelocityVoltage(0).withSlot(0).withEnableFOC(false);
 
-    private final Map<String, ShooterProfile> availableProfiles;
-    private final SendableChooser<String> profileChooser;
-    private ShooterProfile activeProfile;
-    private String lastSelectedProfileName = "";
-
-    private double  targetWheelRPM = 0.0;
+    public double targetWheelRPM = 0.0;
     private boolean motorConfigured = false;
 
-    private double  spinupStartTime = -1.0;
+    private double spinupStartTime = -1.0;
     private boolean isSpinningUp = false;
     public double currentRPM = 0;
 
@@ -50,33 +42,11 @@ public class ShooterSubsystem extends SubsystemBase {
         motor.getConfigurator().apply(config);
         motorConfigured = true;
 
-        availableProfiles = ShooterConstants.createAllProfiles();
-        profileChooser    = new SendableChooser<>();
-
-        boolean defaultSet = false;
-        for (Map.Entry<String, ShooterProfile> entry : availableProfiles.entrySet()) {
-            String profileName = entry.getKey();
-            ShooterProfile profile = entry.getValue();
-            if (profileName.equals(ShooterConstants.DEFAULT_PROFILE_NAME) && !defaultSet) {
-                profileChooser.setDefaultOption(profile.getDisplayName(), profileName);
-                defaultSet = true;
-            } else {
-                profileChooser.addOption(profile.getDisplayName(), profileName);
-            }
-        }
-
-        SmartDashboard.putData("Shooter/Profile Selector", profileChooser);
-        setActiveProfile(ShooterConstants.DEFAULT_PROFILE_NAME);
         SmartDashboard.putNumber("Shooter/Spinup Wait (s)", ShooterConstants.SPINUP_WAIT_SECONDS);
     }
 
     @Override
     public void periodic() {
-        String selectedProfileName = profileChooser.getSelected();
-        if (selectedProfileName != null && !selectedProfileName.equals(lastSelectedProfileName)) {
-            setActiveProfile(selectedProfileName);
-        }
-
         double waitTime = SmartDashboard.getNumber("Shooter/Spinup Wait (s)", ShooterConstants.SPINUP_WAIT_SECONDS);
 
         if (isSpinningUp) {
@@ -88,31 +58,24 @@ public class ShooterSubsystem extends SubsystemBase {
 
         double elapsed = isSpinningUp ? (Timer.getFPGATimestamp() - spinupStartTime) : 0.0;
 
-        SmartDashboard.putNumber("Shooter/Target Wheel RPM",targetWheelRPM);
-        SmartDashboard.putNumber("Shooter/Target Motor RPM",targetWheelRPM * ShooterConstants.GEAR_RATIO);
-        SmartDashboard.putNumber("Shooter/Actual Wheel RPM",getWheelRPM());
-        SmartDashboard.putNumber("Shooter/Actual Motor RPM",getMotorRPM());
-        SmartDashboard.putNumber("Shooter/RPM Error",targetWheelRPM - getWheelRPM());
-        SmartDashboard.putBoolean("Shooter/At Target",atTargetVelocity());
-        SmartDashboard.putBoolean("Shooter/Is Spinning Up",isSpinningUp);
-        SmartDashboard.putNumber("Shooter/Spinup Elapsed (s)",elapsed);
+        SmartDashboard.putNumber("Shooter/Target Wheel RPM", targetWheelRPM);
+        SmartDashboard.putNumber("Shooter/Target Motor RPM", targetWheelRPM * ShooterConstants.GEAR_RATIO);
+        SmartDashboard.putNumber("Shooter/Actual Wheel RPM", getWheelRPM());
+        SmartDashboard.putNumber("Shooter/Actual Motor RPM", getMotorRPM());
+        SmartDashboard.putNumber("Shooter/RPM Error", targetWheelRPM - getWheelRPM());
+        SmartDashboard.putBoolean("Shooter/At Target", atTargetVelocity());
+        SmartDashboard.putBoolean("Shooter/Is Spinning Up", isSpinningUp);
+        SmartDashboard.putNumber("Shooter/Spinup Elapsed (s)", elapsed);
         SmartDashboard.putNumber("Shooter/Spinup Remaining (s)",
             isSpinningUp ? Math.max(0, waitTime - elapsed) : 0.0);
-        SmartDashboard.putBoolean("Shooter/Motor Configured",motorConfigured);
+        SmartDashboard.putBoolean("Shooter/Motor Configured", motorConfigured);
 
-        if (activeProfile != null) {
-            SmartDashboard.putString("Shooter/Active Profile",activeProfile.getName());
-            SmartDashboard.putNumber("Shooter/Profile Angle (deg)",activeProfile.getAngleDegrees());
-            SmartDashboard.putNumber("Shooter/Profile Min Dist (m)",activeProfile.getMinSafeDistance());
-            SmartDashboard.putNumber("Shooter/Profile Max Dist (m)",activeProfile.getMaxSafeDistance());
-        }
+        SmartDashboard.putNumber("Shooter/Config Angle (deg)", ShooterConstants.SHOOTER_ANGLE_DEGREES);
+        SmartDashboard.putNumber("Shooter/Config Min Dist (m)", ShooterConstants.MIN_SAFE_DISTANCE);
+        SmartDashboard.putNumber("Shooter/Config Max Dist (m)", ShooterConstants.MAX_SAFE_DISTANCE);
     }
 
     public void setVelocityForDistance(double distanceMeters) {
-        if (activeProfile == null) {
-            DriverStation.reportError("No active shooter profile", false);
-            return;
-        }
         double wheelRPM = getRPMForDistance(distanceMeters);
         setVelocityRPM(wheelRPM);
         SmartDashboard.putNumber("Shooter/Last Distance (m)", distanceMeters);
@@ -120,7 +83,6 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void updateVelocityForDistance(double distanceMeters) {
-        if (activeProfile == null) return;
         double wheelRPM = getRPMForDistance(distanceMeters);
 
         if (Math.abs(wheelRPM - targetWheelRPM) < 50.0) return;
@@ -142,9 +104,24 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void stop() {
         motor.stopMotor();
-        targetWheelRPM  = 0.0;
+        targetWheelRPM = 0.0;
         isSpinningUp = false;
         spinupStartTime = -1.0;
+    }
+
+    public void changeVelocityRPM(double deltaRPM) {
+        double newTarget = targetWheelRPM + deltaRPM;
+        if (newTarget < 0) newTarget = 0;
+
+        targetWheelRPM = newTarget;
+        double motorRPS = (targetWheelRPM * ShooterConstants.GEAR_RATIO) / 60.0;
+        
+        motor.setControl(velocityRequest.withVelocity(motorRPS));
+
+        if (Math.abs(deltaRPM) > 500.0) {
+            spinupStartTime = Timer.getFPGATimestamp();
+            isSpinningUp = true;
+        }
     }
 
     public double getWheelRPM() {
@@ -163,56 +140,26 @@ public class ShooterSubsystem extends SubsystemBase {
     public boolean isReadyToShoot() {
         return atTargetVelocity() && !isSpinningUp;
     }
-    public boolean isSpeedCriticallyLow() {
-        if (targetWheelRPM == 0.0) return true;
-        return (targetWheelRPM - getWheelRPM()) > ShooterConstants.VELOCITY_TOLERANCE_RPM;
-    }
 
     public boolean isDistanceInRange(double distanceMeters) {
-        if (activeProfile == null) return false;
-        return activeProfile.isDistanceInRange(distanceMeters);
-    }
-
-    public String getActiveProfileName() {
-        return activeProfile != null ? activeProfile.getName() : "NONE";
-    }
-
-    public double getActiveProfileAngle() {
-        return activeProfile != null ? activeProfile.getAngleDegrees() : 0.0;
-    }
-
-    public void setActiveProfile(String profileName) {
-        if (!availableProfiles.containsKey(profileName)) {
-            DriverStation.reportError("Profile '" + profileName + "' not found. Using default.", false);
-            profileName = ShooterConstants.DEFAULT_PROFILE_NAME;
-        }
-        activeProfile           = availableProfiles.get(profileName);
-        lastSelectedProfileName = profileName;
-        DriverStation.reportWarning(
-            String.format("Shooter profile: %s (%.1f deg, %.1f-%.1fm)",
-                activeProfile.getName(), activeProfile.getAngleDegrees(),
-                activeProfile.getMinSafeDistance(), activeProfile.getMaxSafeDistance()),
-            false);
+        return distanceMeters >= ShooterConstants.MIN_SAFE_DISTANCE && 
+               distanceMeters <= ShooterConstants.MAX_SAFE_DISTANCE;
     }
 
     private double getRPMForDistance(double distance) {
-        if (activeProfile == null) {
-            DriverStation.reportError("No active profile - using default RPM", false);
-            return 3500.0;
-        }
-        if (distance < activeProfile.getMinSafeDistance()) {
+        if (distance < ShooterConstants.MIN_SAFE_DISTANCE) {
             DriverStation.reportWarning(String.format(
-                "Distance %.2fm below min %.2fm - clamping", distance, activeProfile.getMinSafeDistance()), false);
+                "Distance %.2fm below min %.2fm - clamping", distance, ShooterConstants.MIN_SAFE_DISTANCE), false);
             SmartDashboard.putBoolean("Shooter/Distance In Range", false);
-            return activeProfile.getRPMForDistance(activeProfile.getMinSafeDistance());
+            return ShooterConstants.DISTANCE_TO_RPM_MAP.get(ShooterConstants.MIN_SAFE_DISTANCE);
         }
-        if (distance > activeProfile.getMaxSafeDistance()) {
+        if (distance > ShooterConstants.MAX_SAFE_DISTANCE) {
             DriverStation.reportWarning(String.format(
-                "Distance %.2fm exceeds max %.2fm - clamping", distance, activeProfile.getMaxSafeDistance()), false);
+                "Distance %.2fm exceeds max %.2fm - clamping", distance, ShooterConstants.MAX_SAFE_DISTANCE), false);
             SmartDashboard.putBoolean("Shooter/Distance In Range", false);
-            return activeProfile.getRPMForDistance(activeProfile.getMaxSafeDistance());
+            return ShooterConstants.DISTANCE_TO_RPM_MAP.get(ShooterConstants.MAX_SAFE_DISTANCE);
         }
         SmartDashboard.putBoolean("Shooter/Distance In Range", true);
-        return activeProfile.getRPMForDistance(distance);
+        return ShooterConstants.DISTANCE_TO_RPM_MAP.get(distance);
     }
 }

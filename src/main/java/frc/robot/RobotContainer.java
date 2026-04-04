@@ -34,6 +34,7 @@ import frc.robot.subsystems.intake.ArmSubsystem;
 import frc.robot.subsystems.intake.IntakeRollerSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
+import frc.robot.util.DashboardConfig;
 
 public class RobotContainer {
 
@@ -62,6 +63,8 @@ public class RobotContainer {
         private final ContinuousAimCommand continuousAim;
         private final ShootCommand shootCommand;
 
+        public final DashboardConfig dashboard;
+
         public RobotContainer() {
                 NamedCommands.registerCommand("AutoShoot",
                                 new AutoShootCommand(shooter, hopper, feeder, drivetrain));
@@ -81,6 +84,7 @@ public class RobotContainer {
                                 MaxSpeed);
 
                 shootCommand = new ShootCommand(shooter, hopper, feeder, drivetrain);
+                dashboard = new DashboardConfig(drivetrain, arm);
 
                 configureBindings();
 

@@ -56,6 +56,8 @@ public class Robot extends TimedRobot {
                         VecBuilder.fill(.5, .5, 9999999));
             }
         }
+
+        m_robotContainer.dashboard.update();
     }
 
     @Override

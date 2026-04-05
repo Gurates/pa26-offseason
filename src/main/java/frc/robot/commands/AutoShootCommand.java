@@ -148,7 +148,7 @@ public class AutoShootCommand extends Command {
                         phase = Phase.UNJAMMING;
                         unjamStartTime = now;
                         unjamAttempts++;
-                        hopper.eject();   // geri çevir
+                        hopper.autoEject(); // geri çevir
                         feeder.stop();
                         jamDetectStartTime = -1.0;
                         logPhase();
@@ -164,7 +164,7 @@ public class AutoShootCommand extends Command {
 
             // ─────────────────────────────────────────────────────────────────
             case UNJAMMING:
-                hopper.eject();
+                hopper.autoEject();
                 feeder.stop();
 
                 // Geri çevirme süresi doldu → tekrar spin-up'a dön

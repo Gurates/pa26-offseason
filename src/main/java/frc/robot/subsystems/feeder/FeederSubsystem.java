@@ -11,15 +11,6 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-/**
- * Feeder subsystem - pushes game pieces from hopper up to shooter.
- * One NEO motor.
- * 
- * FUNCTIONS:
- * - Pull game piece from hopper
- * - Push game piece up into shooter wheels
- * - Control feed timing for shooting
- */
 public class FeederSubsystem extends SubsystemBase {
     private final SparkMax feederMotor;
 

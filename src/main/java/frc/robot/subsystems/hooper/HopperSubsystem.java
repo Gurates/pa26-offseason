@@ -17,6 +17,7 @@ public class HopperSubsystem extends SubsystemBase {
     
     private static final double FEED_SPEED = 0.90;     
     private static final double EJECT_SPEED = -0.90; 
+    private static final double AUTO_EJECT_SPEED = -0.50; 
     
     public HopperSubsystem() {
         rollerMotor = new SparkMax(ROLLER_MOTOR_ID, MotorType.kBrushless);
@@ -45,11 +46,14 @@ public class HopperSubsystem extends SubsystemBase {
         rollerMotor.set(EJECT_SPEED);
     }
 
+    public void autoEject(){
+        rollerMotor.set(AUTO_EJECT_SPEED);
+    }
+
     public void stop() {
         rollerMotor.set(0);
     }
 
-    /** Motor akımını döndürür (amper). Jam tespiti için kullanılır. */
     public double getCurrent() {
         return rollerMotor.getOutputCurrent();
     }

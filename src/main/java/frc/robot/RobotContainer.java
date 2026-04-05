@@ -51,7 +51,6 @@ public class RobotContainer {
         private final CommandXboxController joystick = new CommandXboxController(0);
 
         public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-        // public final IntakeSubsystem intake = new IntakeSubsystem();
         public final IntakeRollerSubsystem intakeRoller = new IntakeRollerSubsystem();
         public final ShooterSubsystem shooter = new ShooterSubsystem();
         public final HopperSubsystem hopper = new HopperSubsystem();
@@ -99,7 +98,6 @@ public class RobotContainer {
                                                 .withVelocityY(-joystick.getLeftX() * MaxSpeed)
                                                 .withRotationalRate(-joystick.getRightX() * MaxAngularRate)));
 
-                // Idle when disabled
                 final var idle = new SwerveRequest.Idle();
                 RobotModeTriggers.disabled().whileTrue(
                                 drivetrain.applyRequest(() -> idle).ignoringDisable(true));
@@ -107,8 +105,6 @@ public class RobotContainer {
                 joystick.leftTrigger().whileTrue(continuousAim);
                 joystick.rightTrigger().whileTrue(shootCommand);
 
-                // joystick.a().onTrue(new ExtendIntakeCommand(intake));
-                // joystick.y().onTrue(new RetractIntakeCommand(intake));
                 joystick.y().whileTrue(new AllianceZoneShootCommand(shooter, hopper, feeder, drivetrain,
                                 joystick::getLeftY, joystick::getLeftX, MaxSpeed));
 

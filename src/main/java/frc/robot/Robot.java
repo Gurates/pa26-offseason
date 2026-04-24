@@ -14,13 +14,16 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.commands.ShootCommand;
-import edu.wpi.first.cameraserver.CameraServer;
+import frc.robot.subsystems.shooter.HoodSubsystem;
+import frc.robot.util.FieldZones;
 
 public class Robot extends TimedRobot {
     private Command m_autonomousCommand;
 
     private final RobotContainer m_robotContainer;
+    private final HoodSubsystem hood = new HoodSubsystem();
 
     /* Log and replay timestamp and joystick data */
     private final HootAutoReplay m_timeAndJoystickReplay = new HootAutoReplay()
@@ -36,11 +39,6 @@ public class Robot extends TimedRobot {
 
     public void robotInit(){
         var camera = CameraServer.startAutomaticCapture();
-    }
-
-    @Override
-    public void robotInit(){
-        CameraServer.startAutomaticCapture();
     }
 
     @Override
@@ -61,9 +59,17 @@ public class Robot extends TimedRobot {
                         llMeasurement.timestampSeconds,
                         VecBuilder.fill(.5, .5, 9999999));
             }
+
+            if(FieldZones.isInZone1() || FieldZones.isInZone2()){
+                        Commands.runOnce(hood::close, hood);
+                }
+                else{
+                        Commands.runOnce(hood::open, hood);
+                }
         }
 
         m_robotContainer.dashboard.update();
+        FieldZones.update(m_robotContainer.drivetrain.getState().Pose);
     }
 
     @Override

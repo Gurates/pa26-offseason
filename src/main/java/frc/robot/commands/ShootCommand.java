@@ -9,6 +9,7 @@ import frc.robot.LimelightHelpers;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.feeder.FeederSubsystem;
 import frc.robot.subsystems.hooper.HopperSubsystem;
+import frc.robot.subsystems.shooter.HoodSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 
 public class ShootCommand extends Command {
@@ -24,6 +25,7 @@ public class ShootCommand extends Command {
     private final ShooterSubsystem shooter;
     private final HopperSubsystem hopper;
     private final FeederSubsystem feeder;
+    private final HoodSubsystem hood;
     private final CommandSwerveDrivetrain drivetrain;
 
     private enum Phase {
@@ -37,11 +39,13 @@ public class ShootCommand extends Command {
             ShooterSubsystem shooter,
             HopperSubsystem hopper,
             FeederSubsystem feeder,
+            HoodSubsystem hood,
             CommandSwerveDrivetrain drivetrain) {
 
         this.shooter = shooter;
         this.hopper = hopper;
         this.feeder = feeder;
+        this.hood = hood;
         this.drivetrain = drivetrain;
 
         addRequirements(shooter, hopper, feeder);
@@ -98,6 +102,8 @@ public class ShootCommand extends Command {
                 }
                 break;
         }
+
+        hood.setAngleForDistance(distance);
     }
 
     @Override

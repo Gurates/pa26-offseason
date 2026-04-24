@@ -102,8 +102,6 @@ public class ShootCommand extends Command {
                 }
                 break;
         }
-
-        hood.setAngleForDistance(distance);
     }
 
     @Override

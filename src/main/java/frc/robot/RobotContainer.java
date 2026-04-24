@@ -58,7 +58,7 @@ public class RobotContainer {
         public final HopperSubsystem hopper = new HopperSubsystem();
         public final FeederSubsystem feeder = new FeederSubsystem();
         private final ArmSubsystem arm = new ArmSubsystem();
-        private final HoodSubsystem hood = new HoodSubsystem();
+        public final HoodSubsystem hood = new HoodSubsystem();
 
         private final SendableChooser<Command> autoChooser;
 
@@ -85,19 +85,12 @@ public class RobotContainer {
                                 joystick::getLeftX,
                                 MaxSpeed);
 
-                shootCommand = new ShootCommand(shooter, hopper, feeder, drivetrain);
+                shootCommand = new ShootCommand(shooter, hopper, feeder,hood, drivetrain);
                 dashboard = new DashboardConfig(drivetrain, arm);
 
                 configureBindings();
 
                 FollowPathCommand.warmupCommand().schedule();
-
-                if(FieldZones.isInZone1() || FieldZones.isInZone2()){
-                        Commands.runOnce(hood::close, hood);
-                }
-                else{
-                        Commands.runOnce(hood::open, hood);
-                }
         }
 
         private void configureBindings() {

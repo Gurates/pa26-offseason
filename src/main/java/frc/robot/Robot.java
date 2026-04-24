@@ -9,7 +9,11 @@ import com.ctre.phoenix6.HootAutoReplay;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -23,7 +27,6 @@ public class Robot extends TimedRobot {
     private Command m_autonomousCommand;
 
     private final RobotContainer m_robotContainer;
-    private final HoodSubsystem hood = new HoodSubsystem();
 
     /* Log and replay timestamp and joystick data */
     private final HootAutoReplay m_timeAndJoystickReplay = new HootAutoReplay()
@@ -37,6 +40,7 @@ public class Robot extends TimedRobot {
         m_robotContainer = new RobotContainer();
     }
 
+    @Override
     public void robotInit(){
         var camera = CameraServer.startAutomaticCapture();
     }
@@ -59,13 +63,17 @@ public class Robot extends TimedRobot {
                         llMeasurement.timestampSeconds,
                         VecBuilder.fill(.5, .5, 9999999));
             }
-
-            if(FieldZones.isInZone1() || FieldZones.isInZone2()){
-                        Commands.runOnce(hood::close, hood);
-                }
-                else{
-                        Commands.runOnce(hood::open, hood);
-                }
+        Pose2d pose = m_robotContainer.drivetrain.getState().Pose;
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+        Translation2d hub = (alliance == Alliance.Blue) 
+            ? new Translation2d(4.552, 4.021) 
+            : new Translation2d(11.961, 4.021);
+        double distance = hub.minus(pose.getTranslation()).getNorm();
+        if (FieldZones.isInZone1() || FieldZones.isInZone2()) {
+            m_robotContainer.hood.close();
+        } else {
+            m_robotContainer.hood.setAngleForDistance(distance);
+        }
         }
 
         m_robotContainer.dashboard.update();

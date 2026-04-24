@@ -33,8 +33,10 @@ import frc.robot.subsystems.hooper.HopperSubsystem;
 import frc.robot.subsystems.intake.ArmSubsystem;
 import frc.robot.subsystems.intake.IntakeRollerSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
+import frc.robot.subsystems.shooter.HoodSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.util.DashboardConfig;
+import frc.robot.util.FieldZones;
 
 public class RobotContainer {
 
@@ -56,6 +58,7 @@ public class RobotContainer {
         public final HopperSubsystem hopper = new HopperSubsystem();
         public final FeederSubsystem feeder = new FeederSubsystem();
         private final ArmSubsystem arm = new ArmSubsystem();
+        private final HoodSubsystem hood = new HoodSubsystem();
 
         private final SendableChooser<Command> autoChooser;
 
@@ -88,6 +91,13 @@ public class RobotContainer {
                 configureBindings();
 
                 FollowPathCommand.warmupCommand().schedule();
+
+                if(FieldZones.isInZone1() || FieldZones.isInZone2()){
+                        Commands.runOnce(hood::close, hood);
+                }
+                else{
+                        Commands.runOnce(hood::open, hood);
+                }
         }
 
         private void configureBindings() {

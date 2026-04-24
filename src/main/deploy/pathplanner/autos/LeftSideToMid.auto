@@ -7,19 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "To The Hub"
+            "pathName": "LeftToMid"
           }
         },
         {
-          "type": "wait",
+          "type": "named",
           "data": {
-            "waitTime": 2.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "To The Source"
+            "name": "AutoShoot"
           }
         }
       ]

@@ -7,7 +7,6 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -18,6 +17,7 @@ public class HopperSubsystem extends SubsystemBase {
     
     private static final double FEED_SPEED = 0.90;     
     private static final double EJECT_SPEED = -0.90; 
+    private static final double AUTO_EJECT_SPEED = -0.50; 
     
     public HopperSubsystem() {
         rollerMotor = new SparkMax(ROLLER_MOTOR_ID, MotorType.kBrushless);
@@ -29,7 +29,7 @@ public class HopperSubsystem extends SubsystemBase {
         
         rollerMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         
-        System.out.println("[Hopper] Initialized" );
+        System.out.println("[Hopper] Initialized");
     }
     
     @Override
@@ -42,24 +42,23 @@ public class HopperSubsystem extends SubsystemBase {
         rollerMotor.set(FEED_SPEED);
     }
 
-
     public void eject() {
         rollerMotor.set(EJECT_SPEED);
+    }
+
+    public void autoEject(){
+        rollerMotor.set(AUTO_EJECT_SPEED);
     }
 
     public void stop() {
         rollerMotor.set(0);
     }
-    
-    /**
-     * Directly set roller speed.
-     * @param speed -1.0 to 1.0
-     */
-    
-    /**
-     * Check if hopper is running.
-     */
+
+    public double getCurrent() {
+        return rollerMotor.getOutputCurrent();
+    }
+
     public boolean isRunning() {
         return Math.abs(rollerMotor.getAppliedOutput()) > 0.01;
     }
-}   
+}

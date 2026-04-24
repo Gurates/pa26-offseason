@@ -19,12 +19,12 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-
+import frc.robot.commands.AllianceZoneShootCommand;
 import frc.robot.commands.AutoShootCommand;
 import frc.robot.commands.ContinuousAimCommand;
 import frc.robot.commands.ShootCommand;
-import frc.robot.commands.ShootMoveCommand;
 import frc.robot.commands.intake.ExtendIntakeCommand;
+import frc.robot.commands.intake.IntakeCommands;
 import frc.robot.commands.intake.RetractIntakeCommand;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
@@ -33,11 +33,14 @@ import frc.robot.subsystems.hooper.HopperSubsystem;
 import frc.robot.subsystems.intake.ArmSubsystem;
 import frc.robot.subsystems.intake.IntakeRollerSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
+import frc.robot.subsystems.shooter.HoodSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
+import frc.robot.util.DashboardConfig;
+import frc.robot.util.FieldZones;
 
 public class RobotContainer {
 
-        private final double MaxSpeed = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+        private final double MaxSpeed = 0.6 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
         private final double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
         private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -50,21 +53,28 @@ public class RobotContainer {
         private final CommandXboxController joystick = new CommandXboxController(0);
 
         public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-        // public final IntakeSubsystem intake = new IntakeSubsystem();
         public final IntakeRollerSubsystem intakeRoller = new IntakeRollerSubsystem();
         public final ShooterSubsystem shooter = new ShooterSubsystem();
         public final HopperSubsystem hopper = new HopperSubsystem();
         public final FeederSubsystem feeder = new FeederSubsystem();
         private final ArmSubsystem arm = new ArmSubsystem();
+        private final HoodSubsystem hood = new HoodSubsystem();
 
         private final SendableChooser<Command> autoChooser;
 
         private final ContinuousAimCommand continuousAim;
         private final ShootCommand shootCommand;
 
+        public final DashboardConfig dashboard;
+
         public RobotContainer() {
                 NamedCommands.registerCommand("AutoShoot",
                                 new AutoShootCommand(shooter, hopper, feeder, drivetrain));
+
+                NamedCommands.registerCommand("intakeDown",
+                                IntakeCommands.intakeDown(arm, intakeRoller));
+                NamedCommands.registerCommand("intakeUp",
+                                IntakeCommands.intakeUp(arm, intakeRoller));
 
                 autoChooser = AutoBuilder.buildAutoChooser("Tests");
                 SmartDashboard.putData("AutoMode", autoChooser);
@@ -76,10 +86,18 @@ public class RobotContainer {
                                 MaxSpeed);
 
                 shootCommand = new ShootCommand(shooter, hopper, feeder, drivetrain);
+                dashboard = new DashboardConfig(drivetrain, arm);
 
                 configureBindings();
 
                 FollowPathCommand.warmupCommand().schedule();
+
+                if(FieldZones.isInZone1() || FieldZones.isInZone2()){
+                        Commands.runOnce(hood::close, hood);
+                }
+                else{
+                        Commands.runOnce(hood::open, hood);
+                }
         }
 
         private void configureBindings() {
@@ -90,7 +108,6 @@ public class RobotContainer {
                                                 .withVelocityY(-joystick.getLeftX() * MaxSpeed)
                                                 .withRotationalRate(-joystick.getRightX() * MaxAngularRate)));
 
-                // Idle when disabled
                 final var idle = new SwerveRequest.Idle();
                 RobotModeTriggers.disabled().whileTrue(
                                 drivetrain.applyRequest(() -> idle).ignoringDisable(true));
@@ -98,10 +115,8 @@ public class RobotContainer {
                 joystick.leftTrigger().whileTrue(continuousAim);
                 joystick.rightTrigger().whileTrue(shootCommand);
 
-                // joystick.a().onTrue(new ExtendIntakeCommand(intake));
-                // joystick.y().onTrue(new RetractIntakeCommand(intake));
-
-                joystick.a().whileTrue(new ShootMoveCommand(drivetrain,joystick::getLeftY ,joystick::getLeftX , MaxSpeed));
+                joystick.y().whileTrue(new AllianceZoneShootCommand(shooter, hopper, feeder, drivetrain,
+                                joystick::getLeftY, joystick::getLeftX, MaxSpeed));
 
                 joystick.x().onTrue(Commands.runOnce(intakeRoller::intake, intakeRoller));
                 joystick.b().onTrue(Commands.runOnce(intakeRoller::stop, intakeRoller));
@@ -112,17 +127,12 @@ public class RobotContainer {
                 joystick.rightBumper().whileTrue(
                                 Commands.startEnd(hopper::eject, hopper::stop, hopper));
 
+                joystick.povDown().whileTrue(
+                                Commands.run(() -> arm.manualDrive(+1), arm));
+
                 joystick.povUp().whileTrue(
                                 Commands.run(() -> arm.manualDrive(-1), arm));
-                
-                // POV Down → extend (direction = +1)
-                joystick.povDown().whileTrue(
-                                Commands.run(() -> arm.manualDrive(+1), arm)
-                                .alongWith(Commands.runOnce(intakeRoller::stop,intakeRoller))
-                                );
 
-                // ── DEFAULT COMMAND ──
-                // When no POV is pressed, hold position with gravity compensation.
                 arm.setDefaultCommand(
                                 Commands.run(() -> arm.manualDrive(0), arm)
                                                 .withName("Arm Hold"));

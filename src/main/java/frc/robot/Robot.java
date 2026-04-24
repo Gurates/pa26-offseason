@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.HootAutoReplay;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.util.Units;
@@ -33,6 +34,10 @@ public class Robot extends TimedRobot {
         m_robotContainer = new RobotContainer();
     }
 
+    public void robotInit(){
+        var camera = CameraServer.startAutomaticCapture();
+    }
+
     @Override
     public void robotInit(){
         CameraServer.startAutomaticCapture();
@@ -57,6 +62,8 @@ public class Robot extends TimedRobot {
                         VecBuilder.fill(.5, .5, 9999999));
             }
         }
+
+        m_robotContainer.dashboard.update();
     }
 
     @Override
